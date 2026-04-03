@@ -1,0 +1,77 @@
+version: "3.9"
+
+services:
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    evirnonment:
+      - Database_URL=postgresql://docmind:docmind@postgres:5432/docmind
+      - redis_url=redis://redis:6379/0
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8000
+      - SECRET_KEY="f4dn-dev-secret-key"
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthys
+      redis:
+        condition: service_healthy
+      chromadb: 
+        condition: service_healthy  
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+  
+  celery_worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    volumes:
+      - ./backend:/app
+    environment:
+      - Database_URL=postgresql://docmind:docmind@postgres:5432/docmind
+      - redis_url=redis://redis:6379/0
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8000
+      - SECRET_KEY="f4dn-dev-secret-key"
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    depends_on:
+      -redis
+      -postgres
+      -chromadb
+    command: celery -A app.celery_app worker --loglevel=info
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: docmind
+      POSTGRES_PASSWORD: docmind
+      POSTGRES_DB: docmind
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U docmind"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  chromadb:  
+    image: chromadb/chromadb:latest
+    ports:
+      - "8001:8000"
+    volumes:
+      - chroma_data: /chroma/chroma
+
+volumes:
+  postgres_data:
+  chroma_data:

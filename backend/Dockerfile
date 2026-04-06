@@ -2,19 +2,17 @@ From python:3.11-slim
 
 WORKDIR /app
 
-RUN apt-get update && apt-get-install -y \
+RUN apt-get update && apt-get install -y \
     gcc \
     libpq-dev \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-ENV PATH="/root/.cargo/bin:$PATH"
+ENV PATH="/root/.local/bin:$PATH"
 
-# Copy project files
 COPY pyproject.toml uv.lock* ./
 
-# Install dependencies (no venv needed inside Docker)
 RUN uv sync --frozen --no-dev
 
 COPY . .

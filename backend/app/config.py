@@ -1,7 +1,7 @@
 from math import e
 from os import access
 
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     secret_key: str
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
-    openai_api_key: str
+    gemini_api_key: str
 
     class Config:
         env_file = ".env"

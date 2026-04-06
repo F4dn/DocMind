@@ -1,7 +1,3 @@
-from fileinput import filename
-from turtle import up
-from venv import create
-
 from sqlalchemy import Column, String, DateTime, ForeignKey, Integer, Text, Enum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
@@ -21,7 +17,7 @@ class DocumentStatus(str, enum.Enum):
 class Document(Base):
     __tablename__ = "documents"
 
-    id = Column(UUID(as_uuid=True), primarly_key=True, default=uuid.uuid4)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     filename = Column(String, nullable=False)
     orignal_name = Column(String, nullable=False)

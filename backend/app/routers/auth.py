@@ -1,7 +1,3 @@
-from tokenize import Token
-from urllib import response
-from venv import create
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -71,5 +67,6 @@ def refresh_token(payload: RefreshRequest, db: Session = Depends(get_db)):
 
 @router.get("/me", response_model=UserOut)
 def me(db: Session = Depends(get_db), credentials=None):
+    return {"message": "This is a protected route", "user": credentials}
     # protected route only for testing register/login flow, will be removed later
-    pass
+    # pass

@@ -21,7 +21,7 @@ class ChatSession(Base):
     owner = relationship("User", back_populates="chat_sessions")
     document = relationship("Document", back_populates="chat_sessions")
     messages = relationship(
-        "ChatMessage", back_populates="chat_session", order_by="ChatMessage.created_at"
+        "Message", back_populates="session", order_by="Message.created_at"
     )
 
 

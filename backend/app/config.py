@@ -1,6 +1,3 @@
-from math import e
-from os import access
-
 from pydantic_settings import BaseSettings
 
 

@@ -6,8 +6,8 @@ class Settings(BaseSettings):
     redis_url: str
     chroma_host: str
     chroma_port: int
-    secret_key: str
-    algorithm: str = "HS256"
+    jwt_secret_key: str
+    jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
     gemini_api_key: str
 

@@ -24,6 +24,7 @@ def get_or_create_collection(user_id: str):
     )
 
 
+# to remove all the chunks of a specific document, we can delete the vectors with the corresponding document_id
 def delete_document_vectors(user_id: str, document_id: str):
     client = get_chroma_client()
     collection_name = f"user_{user_id.replace('-', '_')}"

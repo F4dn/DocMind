@@ -10,6 +10,9 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
     gemini_api_key: str
+    embedding_provider: str = "gemini"
+    openai_api_key: str | None = None
+    llm_provider: str = "gemini"
 
     class Config:
         env_file = ".env"

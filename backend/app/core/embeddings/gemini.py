@@ -1,0 +1,13 @@
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from app.core.embeddings.base import BaseEmbedding
+
+
+class GeminiEmbedding(BaseEmbedding):
+    def __init__(self, api_key: str):
+        self.model = GoogleGenerativeAIEmbeddings(
+            model="models/embedding-001",
+            google_api_key=api_key,
+        )
+
+    def embed_documents(self, texts):
+        return self.model.embed_documents(texts)

@@ -8,5 +8,5 @@ class HuggingFaceEmbedding(BaseEmbedding):
             model_name="sentence-transformers/all-MiniLM-L6-v2"
         )
 
-    def embed_documents(self, texts):
+    def embed(self, texts):
         return self.model.embed_documents(texts)

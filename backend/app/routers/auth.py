@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from app.config import settings
 
 from app.core.database import get_db
 from app.schemas.auth import UserRegister, UserLogin, UserOut, TokenOut, RefreshRequest
@@ -50,7 +51,7 @@ def refresh_token(payload: RefreshRequest, db: Session = Depends(get_db)):
     if not data or data.get("type") != "refresh":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid refresh token",
+            detail=f"Invalid refresh token, {settings.embedding_provider}",
         )
 
     user = get_user_by_id(db, UUID(data.get("sub")))

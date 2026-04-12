@@ -13,7 +13,7 @@ def get_db_session():
     return SessionLocal()
 
 
-@celery_app.taks(bind=True, max_tries=3, default_retry_delay=60)
+@celery_app.task(bind=True, max_tries=3, default_retry_delay=60)
 def process_document(self, document_id: str, user_id: str):
 
     db = get_db_session()

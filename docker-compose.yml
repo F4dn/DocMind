@@ -10,12 +10,14 @@ services:
     volumes:
       - ./backend:/app
       - uploads_data:/app/uploads
+    env_file:
+      - .env
     environment:
-      - Database_URL=postgresql://docmind:docmind@postgres:5432/docmind
-      - redis_url=redis://redis:6379/0
+      - DATABASE_URL=postgresql://docmind:docmind@postgres:5432/docmind
+      - REDIS_URL=redis://redis:6379/0
       - CHROMA_HOST=chromadb
       - CHROMA_PORT=8000
-      - SECRET_KEY="f4dn-dev-secret-key"
+      - JWT_SECRET_KEY=f4dn-dev-secret-key
       - GEMINI_API_KEY=${GEMINI_API_KEY}
     depends_on:
       postgres:
@@ -33,12 +35,14 @@ services:
     volumes:
       - ./backend:/app
       - uploads_data:/app/uploads
+    env_file:
+      - .env
     environment:
-      - Database_URL=postgresql://docmind:docmind@postgres:5432/docmind
-      - redis_url=redis://redis:6379/0
+      - DATABASE_URL=postgresql://docmind:docmind@postgres:5432/docmind
+      - REDIS_URL=redis://redis:6379/0
       - CHROMA_HOST=chromadb
       - CHROMA_PORT=8000
-      - SECRET_KEY="f4dn-dev-secret-key"
+      - JWT_SECRET_KEY=f4dn-dev-secret-key
       - GEMINI_API_KEY=${GEMINI_API_KEY}
     depends_on:
       - redis

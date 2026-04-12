@@ -1,6 +1,5 @@
 import os
-from turtle import save
-from uuid import MAX, UUID
+from uuid import UUID
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
@@ -22,7 +21,7 @@ ALLOWED_EXTENSIONS = {".pdf", ".docx", ".txt", ".doc"}
 MAX_FILE_SIZE_MB = 20
 
 
-@router.post("/", response_model=DocumentOut, status_code=status.HTTP_201_CREATED)
+@router.post("/upload", response_model=DocumentOut, status_code=status.HTTP_201_CREATED)
 async def upload_document(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
@@ -53,8 +52,8 @@ async def upload_document(
     doc = Document(
         user_id=current_user.id,
         filename=stored_name,
-        orignal_name=file.filename,
-        file_size=size_mb,
+        original_name=file.filename,
+        file_size=len(file_bytes),
         status=DocumentStatus.PENDING,
     )
     db.add(doc)

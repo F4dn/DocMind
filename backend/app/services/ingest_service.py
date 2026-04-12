@@ -1,9 +1,7 @@
 import os
-from pydoc import Doc
 import uuid
 from pathlib import Path
 from typing import List
-from webbrowser import get
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from app.core.embeddings.factory import get_embedding_model
@@ -26,8 +24,8 @@ text_splitter = RecursiveCharacterTextSplitter(
 
 
 # save uploaded file to disk, return stored filename and file path
-def save_upload_file(file_bytes: str, orignal_name: str) -> tuple[str, str]:
-    ext = Path(orignal_name).suffix.lower()
+def save_upload_file(file_bytes: str, original_name: str) -> tuple[str, str]:
+    ext = Path(original_name).suffix.lower()
     stored_name = f"{uuid.uuid4()}{ext}"
     file_path = UPLOAD_DIR / stored_name
     file_path.write_bytes(file_bytes)
@@ -80,7 +78,7 @@ def ingest_document(
         batch_texts = texts[start : start + batchsize]
         batch_meta = metadata[start : start + batchsize]
         batch_ids = chunk_ids[start : start + batchsize]
-        batch_embeddings = embedding_model.embed_documents(batch_texts)
+        batch_embeddings = embedding_model.embed(batch_texts)
 
         collection.add(
             ids=batch_ids,

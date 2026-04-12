@@ -20,7 +20,7 @@ class Document(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     filename = Column(String, nullable=False)
-    orignal_name = Column(String, nullable=False)
+    original_name = Column(String, nullable=False)
     file_size = Column(Integer, nullable=False)
     status = Column(Enum(DocumentStatus), default=DocumentStatus.PENDING)
     chunk_count = Column(Integer, default=0)

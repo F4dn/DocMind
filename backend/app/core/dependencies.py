@@ -1,7 +1,7 @@
 from webbrowser import get
 
-from fastapi import Depends, HttpException, status
-from fastapi.security import HTTPBearer, HttpAuthorizationCredentials
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from uuid import UUID
 
@@ -13,20 +13,20 @@ bearer_scheme = HTTPBearer()
 
 
 def get_current_user(
-    credentails: HttpAuthorizationCredentials = Depends(bearer_scheme),
+    credentails: HTTPAuthorizationCredentials = Depends(bearer_scheme),
     db: Session = Depends(get_db),
 ) -> User:
     token = credentails.credentials
     payload = decode_token(token)
     if not payload or payload.get("type") != "access":
-        raise HttpException(
+        raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="invalid or unauthorized token",
         )
 
     user = get_user_by_id(db, UUID(payload.get("sub")))
     if not user or not user.is_active:
-        raise HttpException(
+        raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found or inactive",
         )

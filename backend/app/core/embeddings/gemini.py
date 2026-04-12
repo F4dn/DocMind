@@ -9,5 +9,5 @@ class GeminiEmbedding(BaseEmbedding):
             google_api_key=api_key,
         )
 
-    def embed_documents(self, texts):
+    def embed(self, texts):
         return self.model.embed_documents(texts)

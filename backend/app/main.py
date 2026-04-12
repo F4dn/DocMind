@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import auth
+from app.routers import documents
 
-from app.core.database import engine, Base
 from app.models import user, document, chat
 
 app = FastAPI(title="DocMind API", version="1.0.0")
@@ -16,6 +16,7 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
+app.include_router(documents.router)
 
 
 @app.get("/health")

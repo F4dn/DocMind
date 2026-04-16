@@ -32,7 +32,8 @@ dependencies = [
     "langchain-google-genai==1.0.10",
     "sentence-transformers==2.7.0",
     "transformers==4.41.2",
-    "torch==2.3.0"
+    "torch==2.3.0",
+    "docx2txt",
 ]
 
 [dependency-groups]

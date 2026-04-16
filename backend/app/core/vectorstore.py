@@ -1,23 +1,23 @@
-from webbrowser import get
-
 import chromadb
-import chromadb.config as Settings
+from chromadb.config import Settings
 from app.config import settings
 
 
 def get_chroma_client() -> chromadb.HttpClient:
+    print(f"Connecting to ChromaDB at {settings.chroma_host}:{settings.chroma_port}")
     return chromadb.HttpClient(
-        Settings.Settings(
-            host=settings.chroma_host,
-            port=settings.chroma_port,
-            settings=Settings(anonymized_telemetry=False),
-        )
+        host=settings.chroma_host,
+        port=settings.chroma_port,
+        settings=Settings(anonymized_telemetry=False),
+        tenant=chromadb.DEFAULT_TENANT,
+        database=chromadb.DEFAULT_DATABASE,
     )
 
 
 # Each user get it's own seperate collection in chroma
 def get_or_create_collection(user_id: str):
     client = get_chroma_client()
+
     collection_name = f"user_{user_id.replace('-', '_')}"
     return client.get_or_create_collection(
         name=collection_name, metadata={"hnsw:space": "cosine"}

@@ -33,7 +33,7 @@ def save_upload_file(file_bytes: str, original_name: str) -> tuple[str, str]:
 
 
 # load file into langchain documents based on extension
-def load_document(file_path: str, original_name: str) -> str:
+def load_document(file_path: str, original_name: str) -> List:
     ext = Path(original_name).suffix.lower()
     if ext == ".pdf":
         loader = PyPDFLoader(file_path)
@@ -84,7 +84,7 @@ def ingest_document(
             ids=batch_ids,
             documents=batch_texts,
             embeddings=batch_embeddings,
-            metadata=batch_meta,
+            metadatas=batch_meta,
         )
 
     return len(chunks)

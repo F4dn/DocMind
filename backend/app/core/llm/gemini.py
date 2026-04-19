@@ -6,10 +6,15 @@ from app.core.llm.base import BaseLLM
 
 
 class GeminiLLM(BaseLLM):
-    def __init__(self, api_key: str, model: str = "gemini-1.5-flash"):
+    # def __init__(self, api_key: str, model: str = "gemini-2.0-flash"):
+    def __init__(self, api_key: str, model: str = "gemini-2.0-flash-lite"):
         genai.configure(api_key=api_key)
         self.model = genai.GenerativeModel(
-            model_name=model, temperature=0.2, max_output_tokens=1024
+            model_name=model,
+            generation_config=genai.GenerationConfig(  # ✅ wrap in GenerationConfig
+                temperature=0.2,
+                max_output_tokens=1024,
+            ),
         )
 
     def generate(self, prompt: str, system: str = "") -> str:

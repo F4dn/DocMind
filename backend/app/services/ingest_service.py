@@ -78,7 +78,7 @@ def ingest_document(
         batch_texts = texts[start : start + batchsize]
         batch_meta = metadata[start : start + batchsize]
         batch_ids = chunk_ids[start : start + batchsize]
-        batch_embeddings = embedding_model.embed(batch_texts)
+        batch_embeddings = embedding_model.embed_document(batch_texts)
 
         collection.add(
             ids=batch_ids,

@@ -102,6 +102,9 @@ This spins up 5 containers: **backend**, **celery_worker**, **postgres**, **redi
 ### 3. Run Database Migrations
 
 ```bash
+# Init Alembic
+docker compose exec backend uv run alembic init migrations
+
 # Generate migration from models
 docker compose exec backend uv run alembic revision --autogenerate -m "initial tables"
 

@@ -14,7 +14,7 @@ def get_llm():
         return GeminiLLM(settings.gemini_api_key)
 
     elif provider == "huggingface":
-        return HuggingFaceLLM()
+        return HuggingFaceLLM(settings.huggingface_api_key)
 
     else:
         raise ValueError(f"Unsupported LLM provider: {provider}")

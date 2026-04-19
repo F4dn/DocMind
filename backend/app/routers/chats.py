@@ -2,7 +2,7 @@ import json
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.response import StreamingResponse
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -69,7 +69,10 @@ async def query_document(
         question=payload.question,
     )
 
-    user_msg = Message(session_id=session.id, role="user", content=payload.question)
+    session_id = str(session.id)
+    session_db_id = session.id
+
+    user_msg = Message(session_id=session_db_id, role="user", content=payload.question)
     db.add(user_msg)
     db.commit()
 
@@ -83,7 +86,7 @@ async def query_document(
         full_answer = []
 
         # send session first so frontend know the session
-        yield f"data: {json.dumps({'type': 'session_id', 'session_id': str(session.id)})}\n\n"
+        yield f"data: {json.dumps({'type': 'session_id', 'session_id': str(session_id)})}\n\n"
 
         # stream token
         for token in token_stream:
@@ -92,7 +95,7 @@ async def query_document(
 
         answer_text = "".join(full_answer)
         assistant_msg = Message(
-            session_id=session.id,
+            session_id=session_db_id,
             role="assistant",
             content=answer_text,
             sources=sources,

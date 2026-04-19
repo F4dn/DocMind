@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     embedding_provider: str = "openai"
     llm_provider: str = "gemini"
     openai_api_key: str | None = None
+    huggingface_api_key: str | None = None
 
     class Config:
         env_file = ".env"

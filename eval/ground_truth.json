@@ -1,0 +1,52 @@
+[
+  {
+    "question": "What architecture does the paper propose?",
+    "contexts": [],
+    "ground_truth": "The paper proposes the Transformer, a model architecture based entirely on attention mechanisms, dispensing with recurrence and convolutions entirely."
+  },
+  {
+    "question": "What BLEU score did the model achieve on WMT 2014 English-to-German translation?",
+    "contexts": [],
+    "ground_truth": "The Transformer achieved a BLEU score of 28.4 on the WMT 2014 English-to-German translation task, outperforming all previously published models."
+  },
+  {
+    "question": "What BLEU score did the model achieve on WMT 2014 English-to-French translation?",
+    "contexts": [],
+    "ground_truth": "The Transformer achieved a BLEU score of 41.0 on the WMT 2014 English-to-French translation task, establishing a new state of the art."
+  },
+  {
+    "question": "How many attention heads does the Transformer use and what is the model dimension?",
+    "contexts": [],
+    "ground_truth": "The Transformer uses 8 parallel attention heads with a model dimension d_model of 512 and key/value dimensions d_k and d_v of 64 each."
+  },
+  {
+    "question": "What optimizer and learning rate schedule was used for training?",
+    "contexts": [],
+    "ground_truth": "The model was trained using the Adam optimizer with beta1=0.9, beta2=0.98, and epsilon=1e-9. A custom learning rate schedule was used that increased linearly for warmup_steps=4000 steps and then decreased proportionally."
+  },
+  {
+    "question": "How long did training take and on what hardware?",
+    "contexts": [],
+    "ground_truth": "The base model was trained for 100,000 steps taking 12 hours, while the big model was trained for 300,000 steps taking 3.5 days, both on a machine with 8 NVIDIA P100 GPUs."
+  },
+  {
+    "question": "What is the dimension of the feed-forward network in the Transformer?",
+    "contexts": [],
+    "ground_truth": "The inner dimension of the position-wise feed-forward networks is d_ff = 2048, while the input and output dimensions are d_model = 512."
+  },
+  {
+    "question": "How does the Transformer encode position information?",
+    "contexts": [],
+    "ground_truth": "The Transformer uses positional encodings added to the input embeddings using sine and cosine functions of different frequencies, allowing the model to learn to attend by relative positions."
+  },
+  {
+    "question": "What dropout rate was applied during training?",
+    "contexts": [],
+    "ground_truth": "A dropout rate of 0.1 was applied to the output of each sub-layer before it was added to the sub-layer input and normalized, as well as to the sums of embeddings and positional encodings."
+  },
+  {
+    "question": "What are the three types of attention used in the Transformer?",
+    "contexts": [],
+    "ground_truth": "The Transformer uses three types of attention: encoder self-attention where each position attends to all positions in the encoder, decoder self-attention restricted to leftward positions, and encoder-decoder attention where decoder attends to all encoder positions."
+  }
+]

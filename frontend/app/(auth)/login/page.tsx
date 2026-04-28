@@ -1,40 +1,44 @@
-"use client"
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { motion } from "framer-motion"
-import Cookies from "js-cookie"
-import toast from "react-hot-toast"
-import { HiOutlineMail, HiOutlineLockClosed } from "react-icons/hi"
-import { HiArrowRight } from "react-icons/hi2"
-import { ImSpinner8 } from "react-icons/im"
+"use client";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { motion } from "framer-motion";
+import Cookies from "js-cookie";
+import toast from "react-hot-toast";
+import { HiOutlineMail, HiOutlineLockClosed } from "react-icons/hi";
+import { HiArrowRight } from "react-icons/hi2";
+import { ImSpinner8 } from "react-icons/im";
 
-import { AuthShell } from "@/components/auth/AuthShell"
-import { AuthInput } from "@/components/auth/AuthInput"
-import { GlowButton } from "@/components/shared/GlowButton"
-import { authApi } from "@/lib/api"
+import { AuthShell } from "@/components/auth/AuthShell";
+import { AuthInput } from "@/components/auth/AuthInput";
+import { GlowButton } from "@/components/shared/GlowButton";
+import { authApi } from "@/lib/api";
 
 export default function LoginPage() {
-  const router = useRouter()
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [loading, setLoading] = useState(false)
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
+    e.preventDefault();
+    setLoading(true);
     try {
-      const { data } = await authApi.login(email, password)
-      Cookies.set("access_token", data.access_token, { expires: 1 })
-      Cookies.set("refresh_token", data.refresh_token, { expires: 7 })
-      toast.success("Welcome back")
-      router.push("/dashboard")
+      const { data } = await authApi.login(email, password);
+      Cookies.set("access_token", data.access_token, { expires: 1 });
+      Cookies.set("refresh_token", data.refresh_token, { expires: 7 });
+      toast.success("Welcome back");
+      router.push("/dashboard");
     } catch (err: any) {
-      toast.error(err.response?.data?.detail || "Login failed")
+      // console.log("FULL ERROR ", err);
+      // console.log("RESPONSE ", err?.response);
+      // console.log("DATA ", err?.response?.data);
+      // console.log("DETAIL ", err?.response?.data?.detail);
+      toast.error(err.response?.data?.detail?.msg || "Login failed");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <AuthShell>
@@ -134,5 +138,5 @@ export default function LoginPage() {
         Protected by encryption · GDPR compliant
       </motion.p>
     </AuthShell>
-  )
+  );
 }

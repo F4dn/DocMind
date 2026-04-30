@@ -1,14 +1,16 @@
-"use client"
-import { motion } from "framer-motion"
-import { HiOutlineDocumentText } from "react-icons/hi"
-import type { SourceChunk } from "@/lib/api"
+"use client";
+import { motion } from "framer-motion";
+import { HiOutlineDocumentText } from "react-icons/hi";
+import type { SourceChunk } from "@/lib/api";
 
 interface Props {
-  source: SourceChunk
-  index: number
+  source: SourceChunk;
+  index: number;
 }
 
 export function CitationCard({ source, index }: Props) {
+  const pct = Math.round(source.score * 100);
+
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
@@ -25,8 +27,16 @@ export function CitationCard({ source, index }: Props) {
             <span className="text-[10px] font-mono text-brand-cyan">
               [chunk_{source.chunk_index}]
             </span>
-            <span className="text-[10px] font-mono text-ink-muted">
-              {(source.score * 100).toFixed(0)}% match
+            <span
+              className={`text-[10px] font-mono ${
+                pct >= 75
+                  ? "text-success"
+                  : pct >= 55
+                    ? "text-brand-cyan"
+                    : "text-ink-muted"
+              }`}
+            >
+              {pct}% match
             </span>
           </div>
           <div className="text-[11px] font-mono text-ink-muted truncate">
@@ -43,11 +53,21 @@ export function CitationCard({ source, index }: Props) {
       <div className="mt-3 h-0.5 bg-white/5 rounded-full overflow-hidden">
         <motion.div
           initial={{ width: 0 }}
-          animate={{ width: `${source.score * 100}%` }}
-          transition={{ duration: 0.5, delay: index * 0.06 + 0.2 }}
-          className="h-full bg-brand-gradient"
+          animate={{ width: `${pct}%` }}
+          transition={{
+            duration: 0.6,
+            delay: index * 0.06 + 0.2,
+            ease: "easeOut",
+          }}
+          className={`h-full rounded-full ${
+            pct >= 75
+              ? "bg-success"
+              : pct >= 55
+                ? "bg-brand-gradient"
+                : "bg-white/20"
+          }`}
         />
       </div>
     </motion.div>
-  )
+  );
 }

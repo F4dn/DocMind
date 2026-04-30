@@ -2,6 +2,7 @@ import os
 import uuid
 from pathlib import Path
 from typing import List
+import pdfplumber 
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from app.core.embeddings.factory import get_embedding_model
@@ -35,15 +36,33 @@ def save_upload_file(file_bytes: str, original_name: str) -> tuple[str, str]:
 # load file into langchain documents based on extension
 def load_document(file_path: str, original_name: str) -> List:
     ext = Path(original_name).suffix.lower()
+
     if ext == ".pdf":
-        loader = PyPDFLoader(file_path)
-    elif ext in [".docx", ".doc"]:
+        # pdfplumber preserves spaces far better than PyPDF
+        docs = []
+        with pdfplumber.open(file_path) as pdf:
+            for i, page in enumerate(pdf.pages):
+                text = page.extract_text(x_tolerance=2, y_tolerance=2)
+                if text and text.strip():
+                    from langchain_core.documents import Document
+                    docs.append(Document(
+                        page_content=text,
+                        metadata={"page": i, "source": original_name}
+                    ))
+        if not docs:
+            raise ValueError("PDF produced no extractable text")
+        return docs
+
+    elif ext in (".docx", ".doc"):
         loader = Docx2txtLoader(file_path)
-    elif ext in [".txt", ".md"]:
-        loader = TextLoader(file_path)
+        return loader.load()
+
+    elif ext == ".txt":
+        loader = TextLoader(file_path, encoding="utf-8")
+        return loader.load()
+
     else:
         raise ValueError(f"Unsupported file type: {ext}")
-    return loader.load()
 
 
 def ingest_document(

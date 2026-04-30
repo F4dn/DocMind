@@ -8,16 +8,18 @@ interface Session {
   id: string
   title: string | null
   created_at: string
+  document_id: string
 }
 
 interface Props {
+  docId: string  
   sessions: Session[]
   activeSessionId: string | null
   onNewChat: () => void
   docName: string
 }
 
-export function SessionList({ sessions, activeSessionId, onNewChat, docName }: Props) {
+export function SessionList({ docId,sessions, activeSessionId, onNewChat, docName }: Props) {
   const router = useRouter()
 
   return (
@@ -82,7 +84,7 @@ export function SessionList({ sessions, activeSessionId, onNewChat, docName }: P
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.05 }}
-                  onClick={() => router.push(`/chat/${session.id}`)}
+                  onClick={() => router.push(`/chat/${docId}?session=${session.id}`)}
                   className={cn(
                     "w-full text-left px-3 py-3 rounded-xl transition-all relative group",
                     isActive

@@ -108,6 +108,26 @@ def _rerank_chunks(
     reranked = sorted(chunks, key=lambda x: x["rerank_score"], reverse=True)
     return reranked[:top_n]
 
+def _normalize_scores(chunks: List[dict]) -> List[dict]:
+    """
+    Min-max normalize reranker scores to 0-1 range relative to the batch.
+    Best chunk → close to 1.0, worst chunk → close to 0.0
+    """
+    scores = [c.get("rerank_score", 0.0) for c in chunks]
+    min_s = min(scores)
+    max_s = max(scores)
+    score_range = max_s - min_s
+
+    for chunk in chunks:
+        raw = chunk.get("rerank_score", 0.0)
+        if score_range == 0:
+            # All chunks scored identically — give them all 0.5
+            chunk["normalized_score"] = 0.5
+        else:
+            # Scale to 0.4–1.0 range (floor at 40% so nothing looks useless)
+            chunk["normalized_score"] = 0.4 + 0.6 * ((raw - min_s) / score_range)
+
+    return chunks
 
 def _build_rag_prompt(question: str, chunks: List[dict]) -> str:
     """bulid final prompt with numbered context chunk"""
@@ -174,17 +194,20 @@ def stream_rag_response(
     # 4. Rerank top-5
     top_chunks = _rerank_chunks(question, doc_chunks, top_n=5)
 
-    # 5. Build prompt and stream
+    # 5. Normalize scores within the batch   ← add this
+    top_chunks = _normalize_scores(top_chunks)
+
+    # 6. Build prompt and stream
     prompt = _build_rag_prompt(question, top_chunks)
 
-    # Format sources for DB persistence
+    # 7. Format sources — use normalized_score not rerank_score
     sources = [
         {
             "chunk_index": chunk["metadata"].get("chunk_index", i),
             "page": chunk["metadata"].get("page", "N/A"),
             "source": chunk["metadata"].get("source", "unknown"),
-            "content": chunk["content"][:200],  # preview only
-            "score": round(chunk.get("rerank_score", 0.0), 4),
+            "content": chunk["content"][:200],
+            "score": round(chunk["normalized_score"], 4),  # ← normalized 0.4–1.0
         }
         for i, chunk in enumerate(top_chunks)
     ]

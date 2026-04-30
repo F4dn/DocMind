@@ -1,15 +1,16 @@
-"use client"
-import { AnimatePresence, motion } from "framer-motion"
-import { HiOutlineBookOpen } from "react-icons/hi"
-import type { SourceChunk } from "@/lib/api"
-import { CitationCard } from "./CitationCard"
+"use client";
+import { AnimatePresence, motion } from "framer-motion";
+import { HiOutlineBookOpen } from "react-icons/hi";
+import type { SourceChunk } from "@/lib/api";
+import { CitationCard } from "./CitationCard";
 
 interface Props {
-  sources: SourceChunk[]
-  isStreaming: boolean
+  sources: SourceChunk[];
+  isStreaming: boolean;
+  onOpen?: () => void; // ← new: fallback trigger
 }
 
-export function CitationPanel({ sources, isStreaming }: Props) {
+export function CitationPanel({ sources, isStreaming, onOpen }: Props) {
   return (
     <aside className="hidden xl:flex flex-col w-80 flex-shrink-0 border-l border-white/5">
       {/* Header */}
@@ -33,7 +34,7 @@ export function CitationPanel({ sources, isStreaming }: Props) {
               key="empty"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="h-full flex flex-col items-center justify-center py-20 text-center"
+              className="flex flex-col items-center justify-center py-20 text-center"
             >
               <div className="w-12 h-12 rounded-xl bg-brand-gradient-soft border border-white/10 flex items-center justify-center mx-auto mb-4">
                 <HiOutlineBookOpen className="w-5 h-5 text-brand-cyan" />
@@ -68,21 +69,21 @@ export function CitationPanel({ sources, isStreaming }: Props) {
         </AnimatePresence>
       </div>
 
-      {/* Footer */}
+      {/* Replace the footer section with: */}
       {sources.length > 0 && (
-        <div className="px-5 py-3 border-t border-white/5">
+        <div className="px-5 py-3 border-t border-white/5 flex-shrink-0">
           <div className="text-[10px] font-mono uppercase tracking-wider text-ink-muted">
-            Avg score:{" "}
+            Avg relevance:{" "}
             <span className="text-brand-cyan">
-              {(
+              {Math.round(
                 (sources.reduce((s, c) => s + c.score, 0) / sources.length) *
-                100
-              ).toFixed(0)}
+                  100,
+              )}
               %
             </span>
           </div>
         </div>
       )}
     </aside>
-  )
+  );
 }

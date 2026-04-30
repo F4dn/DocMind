@@ -1,0 +1,10 @@
+
+GEMINI_API_KEY=you api key
+DATABASE_URL=db url
+REDIS_URL=redis url
+CHROMA_HOST=localhost
+CHROMA_PORT=8000
+JWT_SECRET_KEY=your secret key
+EMBEDDING_PROVIDER=embedding provider (e.g., gemini, openai)
+LLM_PROVIDER=llm provider (e.g., gemini, openai)
+HUGGINGFACE_API_KEY=hf api

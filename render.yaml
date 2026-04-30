@@ -1,0 +1,86 @@
+services:
+  # ── FastAPI backend ──────────────────────────────
+  - type: web
+    name: docmind-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: docmind-db
+          property: connectionString
+      - key: REDIS_URL
+        sync: false # set manually in Render dashboard
+      - key: CHROMA_HOST
+        value: docmind-chroma
+      - key: CHROMA_PORT
+        value: 8000
+      - key: SECRET_KEY
+        generateValue: true
+      - key: GEMINI_API_KEY
+        sync: false # set manually
+      - key: OPENAI_API_KEY
+        sync: false # set manually (or leave empty if using Gemini)
+      - key: EMBEDDING_PROVIDER
+        value: gemini
+      - key: LLM_PROVIDER
+        value: gemini
+      - key: ENVIRONMENT
+        value: production
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    healthCheckPath: /health
+
+  # ── Celery worker ────────────────────────────────
+  - type: worker
+    name: docmind-celery
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: docmind-db
+          property: connectionString
+      - key: REDIS_URL
+        sync: false
+      - key: CHROMA_HOST
+        value: docmind-chroma
+      - key: CHROMA_PORT
+        value: 8000
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: EMBEDDING_PROVIDER
+        value: gemini
+      - key: LLM_PROVIDER
+        value: gemini
+      - key: ENVIRONMENT
+        value: production
+    startCommand: celery -A app.celery_app worker --loglevel=info --concurrency=1
+
+  # ── ChromaDB ─────────────────────────────────────
+  - type: web
+    name: docmind-chroma
+    runtime: docker
+    image:
+      url: docker.io/chromadb/chroma:latest
+    plan: free
+    disk:
+      name: chroma-storage
+      mountPath: /chroma/chroma
+      sizeGB: 1
+    envVars:
+      - key: IS_PERSISTENT
+        value: "TRUE"
+      - key: ANONYMIZED_TELEMETRY
+        value: "FALSE"
+
+databases:
+  - name: docmind-db
+    plan: free
+    databaseName: docmind
+    user: docmind

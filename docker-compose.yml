@@ -2,7 +2,7 @@
 
 services:
   backend:
-    build: 
+    build:
       context: ./backend
       dockerfile: Dockerfile
     ports:
@@ -23,10 +23,10 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      chromadb: 
-        condition: service_started  
+      chromadb:
+        condition: service_started
     command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-  
+
   celery_worker:
     build:
       context: ./backend
@@ -74,14 +74,20 @@ services:
       timeout: 5s
       retries: 5
 
-  chromadb:  
+  chromadb:
     image: chromadb/chroma:0.5.0
     ports:
       - "8001:8000"
     volumes:
       - chroma_data:/chroma/chroma
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/heartbeat')"]
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/heartbeat')",
+        ]
       interval: 5s
       timeout: 5s
       retries: 5

@@ -1,0 +1,77 @@
+[
+  {
+    "question": "What architecture does the paper propose?",
+    "contexts": [],
+    "ground_truth": "The paper proposes the Transformer, a new simple network architecture based solely on attention mechanisms, dispensing with recurrence and convolutions entirely."
+  },
+  {
+    "question": "What BLEU score did the Transformer achieve on the WMT 2014 English-to-German translation task?",
+    "contexts": [],
+    "ground_truth": "The big Transformer model achieved 28.4 BLEU on the WMT 2014 English-to-German translation task, improving over the existing best results including ensembles by over 2 BLEU."
+  },
+  {
+    "question": "What BLEU score did the Transformer achieve on the WMT 2014 English-to-French translation task?",
+    "contexts": [],
+    "ground_truth": "The Transformer achieved a new single-model state-of-the-art BLEU score of 41.8 on the WMT 2014 English-to-French translation task after training for 3.5 days on eight GPUs."
+  },
+  {
+    "question": "How many layers does the encoder and decoder each have in the base Transformer model?",
+    "contexts": [],
+    "ground_truth": "Both the encoder and decoder are each composed of a stack of N=6 identical layers."
+  },
+  {
+    "question": "What is the formula for Scaled Dot-Product Attention?",
+    "contexts": [],
+    "ground_truth": "The Scaled Dot-Product Attention is computed as Attention(Q, K, V) = softmax(QK^T / sqrt(d_k)) * V, where Q, K, and V are the query, key, and value matrices and d_k is the dimension of the keys."
+  },
+  {
+    "question": "Why does the paper scale the dot product by the square root of d_k?",
+    "contexts": [],
+    "ground_truth": "For large values of d_k, the dot products grow large in magnitude, pushing the softmax function into regions where it has extremely small gradients. To counteract this effect, the dot products are scaled by 1/sqrt(d_k)."
+  },
+  {
+    "question": "How many parallel attention heads does the base Transformer model use and what are the key dimensions?",
+    "contexts": [],
+    "ground_truth": "The base model employs h=8 parallel attention heads. For each head, dk = dv = dmodel/h = 64. The model dimension is dmodel=512."
+  },
+  {
+    "question": "What are the three ways multi-head attention is used in the Transformer?",
+    "contexts": [],
+    "ground_truth": "The Transformer uses multi-head attention in three ways: encoder-decoder attention layers where queries come from the decoder and keys/values from the encoder output; encoder self-attention layers where all keys, values and queries come from the output of the previous encoder layer; and decoder self-attention layers which are masked to prevent attending to subsequent positions."
+  },
+  {
+    "question": "What is the position-wise feed-forward network formula and what are its dimensions?",
+    "contexts": [],
+    "ground_truth": "The position-wise feed-forward network is FFN(x) = max(0, xW1 + b1)W2 + b2, consisting of two linear transformations with a ReLU activation. The input and output dimension is dmodel=512 and the inner-layer has dimensionality dff=2048."
+  },
+  {
+    "question": "How are positional encodings computed in the Transformer?",
+    "contexts": [],
+    "ground_truth": "Positional encodings use sine and cosine functions of different frequencies: PE(pos, 2i) = sin(pos/10000^(2i/dmodel)) and PE(pos, 2i+1) = cos(pos/10000^(2i/dmodel)), where pos is the position and i is the dimension. They have the same dimension dmodel as the embeddings so the two can be summed."
+  },
+  {
+    "question": "What optimizer was used to train the Transformer and what were its hyperparameters?",
+    "contexts": [],
+    "ground_truth": "The Adam optimizer was used with beta1=0.9, beta2=0.98 and epsilon=1e-9. The learning rate was varied over training, increasing linearly for the first warmup_steps=4000 training steps, then decreasing proportionally to the inverse square root of the step number."
+  },
+  {
+    "question": "What regularization techniques were used during training?",
+    "contexts": [],
+    "ground_truth": "Three regularization techniques were used: residual dropout applied to the output of each sub-layer with Pdrop=0.1 for the base model; dropout applied to the sums of embeddings and positional encodings; and label smoothing with value epsilon_ls=0.1 during training."
+  },
+  {
+    "question": "What is the maximum path length between positions in self-attention compared to recurrent layers?",
+    "contexts": [],
+    "ground_truth": "In the Transformer, the maximum path length between any two input and output positions is O(1) with a constant number of sequentially executed operations. Recurrent layers require O(n) sequential operations and have a maximum path length of O(n), making it harder to learn long-range dependencies."
+  },
+  {
+    "question": "What hardware and how long was the base Transformer model trained?",
+    "contexts": [],
+    "ground_truth": "The base models were trained on one machine with 8 NVIDIA P100 GPUs. Each training step took about 0.4 seconds and the base models were trained for a total of 100,000 steps or 12 hours. The big models were trained for 300,000 steps which took 3.5 days."
+  },
+  {
+    "question": "What F1 score did the Transformer achieve on English constituency parsing on the WSJ test set?",
+    "contexts": [],
+    "ground_truth": "A 4-layer Transformer trained on the WSJ portion of the Penn Treebank with about 40K training sentences achieved 91.3 F1 on the WSJ test set (Section 23), and 92.7 F1 in the semi-supervised setting, outperforming all previously reported models except the Recurrent Neural Network Grammar."
+  }
+]

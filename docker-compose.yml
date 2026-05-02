@@ -9,6 +9,7 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app
+      - ./eval:/app/eval
     env_file:
       - .env
     environment:

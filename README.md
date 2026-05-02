@@ -1,130 +1,83 @@
-# DocMind 🧠
+# DocMind — AI Document Intelligence
 
-### AI-Powered Document Intelligence Platform
+> Upload any document. Ask anything. Get cited answers, streamed in real time.
 
-> Upload documents. Ask questions. Get answers — with cited sources, streamed in real time.
-
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.111-009688?style=flat-square&logo=fastapi)](https://fastapi.tiangolo.com)
-[![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat-square&logo=next.js)](https://nextjs.org)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?style=flat-square&logo=postgresql)](https://postgresql.org)
-[![ChromaDB](https://img.shields.io/badge/ChromaDB-0.5-ff6b35?style=flat-square)](https://trychroma.com)
-[![Celery](https://img.shields.io/badge/Celery-5.3-37814a?style=flat-square&logo=celery)](https://docs.celeryq.dev)
-[![Redis](https://img.shields.io/badge/Redis-7-dc382d?style=flat-square&logo=redis)](https://redis.io)
-[![Docker](https://img.shields.io/badge/Docker-Compose-2496ed?style=flat-square&logo=docker)](https://docker.com)
-[![Gemini](https://img.shields.io/badge/Gemini-API-4285F4?style=flat-square&logo=google)](https://aistudio.google.com)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-docmind.vercel.app-A855F7?style=flat-square)](https://docmind.vercel.app)
+[![License](https://img.shields.io/badge/License-MIT-10B981?style=flat-square)](LICENSE)
 
 ---
 
 ## What is DocMind?
 
-DocMind is a full-stack SaaS application that lets users upload PDF/DOCX documents and have AI-powered conversations with them. Each answer is grounded in the actual document content with cited source chunks — no hallucinations, no guesswork.
+DocMind is a full-stack **Retrieval-Augmented Generation (RAG)** application. Upload a PDF, DOCX, or TXT file — DocMind chunks, embeds, and stores it in a vector database, then lets you ask questions in natural language. Every answer is grounded in your source material with inline citations and streamed token-by-token in real time.
 
-```
-Upload PDF → Background Processing → Chunked & Embedded → Ask Anything → Streamed Answer + Sources
-```
+Built as a portfolio project demonstrating production-grade AI engineering across the full stack: async document processing, semantic vector search, LLM streaming, multi-tenant isolation, and a modern glassmorphic UI.
 
 ---
 
-## Architecture
+## RAG Pipeline
+
+### Ingestion (async, non-blocking)
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                        Client (Next.js 15)                  │
-│         Auth  ·  Upload  ·  Chat (SSE Stream)  ·  Citations │
-└────────────────────────────┬────────────────────────────────┘
-                             │ HTTP / SSE
-┌────────────────────────────▼────────────────────────────────┐
-│                     FastAPI Backend                          │
-│   /auth  ·  /documents  ·  /chat  ·  JWT  ·  Rate Limiting  │
-└──────┬─────────────────┬──────────────────┬─────────────────┘
-       │                 │                  │
-┌──────▼──────┐  ┌───────▼──────┐  ┌───────▼───────┐
-│  PostgreSQL  │  │    Redis     │  │   ChromaDB    │
-│  Users       │  │  Task Queue  │  │  Vector Store │
-│  Documents   │  │  Celery      │  │  Embeddings   │
-│  Chat Hist.  │  │  Broker      │  │  Per-user     │
-└─────────────┘  └──────────────┘  └───────────────┘
-                        │
-              ┌─────────▼──────────┐
-              │   Celery Worker    │
-              │  parse → chunk     │
-              │  embed → store     │
-              └────────────────────┘
+Upload PDF / DOCX / TXT
+        │
+        ▼
+FastAPI saves file → DB record created (status: pending)
+        │
+        ▼  Celery task dispatched via Redis
+Celery Worker picks up task
+        ├── pdfplumber parses file (preserves spacing)
+        ├── RecursiveCharacterTextSplitter → 512-token chunks, 50 overlap
+        ├── Embedding model → dense vectors per chunk
+        ├── ChromaDB stores vectors + metadata (doc_id, user_id, page, chunk_index)
+        └── PostgreSQL updated: status=ready, chunk_count=N
+
+Frontend polls GET /documents/{id}/status every 3s
+```
+
+### Query (real-time streaming)
+
+```
+User asks: "What attention mechanism does the Transformer use?"
+        │
+        ▼
+Multi-query expansion → LLM generates 3 rephrasings of the question
+        │
+        ▼
+ChromaDB semantic search
+  - Filtered by user_id + document_id at DB level (not after retrieval)
+  - Top-20 chunks per query variant → deduplicated
+        │
+        ▼
+CrossEncoder reranker (ms-marco-MiniLM-L-6-v2)
+  - Re-scores all candidates with full attention over query+chunk
+  - Selects top-5 most relevant chunks
+        │
+        ▼
+Cited prompt → LLM generates answer with [chunk_N] inline citations
+        │
+        ▼
+Server-Sent Events stream tokens to browser one by one
+PostgreSQL stores message + sources for session history
 ```
 
 ---
 
 ## Tech Stack
 
-| Layer            | Technology             | Purpose                           |
-| ---------------- | ---------------------- | --------------------------------- |
-| **Frontend**     | Next.js 15, TypeScript | App Router, SSE streaming         |
-| **Backend**      | FastAPI, Python 3.11   | REST API, async endpoints         |
-| **Database**     | PostgreSQL 16          | Users, documents, chat history    |
-| **Vector Store** | ChromaDB               | Semantic search, embeddings       |
-| **Task Queue**   | Celery + Redis         | Async document ingestion          |
-| **AI**           | Gemini API + LangChain | Embeddings + generation           |
-| **Auth**         | JWT + bcrypt           | Secure token-based auth           |
-| **Migrations**   | Alembic                | Database schema versioning        |
-| **Packaging**    | uv                     | Fast Python dependency management |
-| **Infra**        | Docker Compose         | One-command local dev             |
-
----
-
-## Getting Started
-
-### Prerequisites
-
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-- [Gemini API Key](https://aistudio.google.com/app/apikey) — free tier available
-
-### 1. Clone & Configure
-
-```bash
-git clone https://github.com/yourusername/docmind.git
-cd docmind
-```
-
-Create a `.env` file in the project root:
-
-```env
-GEMINI_API_KEY=your-gemini-api-key-here
-```
-
-### 2. Start All Services
-
-```bash
-docker compose up --build
-```
-
-This spins up 5 containers: **backend**, **celery_worker**, **postgres**, **redis**, **chromadb**.
-
-### 3. Run Database Migrations
-
-```bash
-# Init Alembic
-docker compose exec backend uv run alembic init migrations
-
-# Generate migration from models
-docker compose exec backend uv run alembic revision --autogenerate -m "initial tables"
-
-# Apply migration
-docker compose exec backend uv run alembic upgrade head
-```
-
-### 4. Verify Everything Works
-
-```bash
-# Check tables were created
-docker compose exec postgres psql -U docmind -d docmind -c "\dt"
-
-# Check API is healthy
-curl http://localhost:8000/health
-# → {"status": "ok", "service": "docmind-api"}
-
-# Open interactive API docs
-open http://localhost:8000/docs
-```
+| Layer           | Technology                                                      |
+| --------------- | --------------------------------------------------------------- |
+| **Frontend**    | Next.js 15 (App Router), TypeScript, TailwindCSS, Framer Motion |
+| **Backend**     | FastAPI, SQLAlchemy, Alembic, PostgreSQL                        |
+| **AI / RAG**    | LangChain, Pluggable LLM (Gemini / OpenAI / HuggingFace)        |
+| **Embeddings**  | Pluggable (Gemini text-embedding-004 / OpenAI / HuggingFace)    |
+| **Retrieval**   | ChromaDB, Multi-query expansion, CrossEncoder reranking         |
+| **Async tasks** | Celery + Redis                                                  |
+| **Auth**        | JWT (access + refresh tokens, bcrypt)                           |
+| **PDF parsing** | pdfplumber (preserves character spacing)                        |
+| **Evaluation**  | RAGAS (faithfulness, answer relevancy, context recall)          |
+| **Packaging**   | Docker, uv                                                      |
 
 ---
 
@@ -132,174 +85,240 @@ open http://localhost:8000/docs
 
 ```
 docmind/
-├── backend/                    # FastAPI application
+├── backend/
+│   ├── Dockerfile                  # Production multi-stage build
+│   ├── Dockerfile.dev              # Local dev with hot reload
+│   ├── start.sh                    # Runs migrations + celery + uvicorn
+│   ├── pyproject.toml              # Dependencies managed with uv
+│   └── app/
+│       ├── main.py                 # FastAPI app, CORS, router registration
+│       ├── config.py               # Pydantic settings from .env
+│       ├── celery_app.py           # Celery + Redis broker config
+│       ├── core/
+│       │   ├── database.py         # SQLAlchemy engine + session factory
+│       │   ├── vectorstore.py      # ChromaDB client (local + cloud)
+│       │   ├── dependencies.py     # FastAPI deps: get_current_user, get_db
+│       │   ├── embeddings/         # Pluggable: Gemini, OpenAI, HuggingFace
+│       │   └── llm/                # Pluggable: Gemini, OpenAI, HuggingFace
+│       ├── models/                 # SQLAlchemy: User, Document, ChatSession, Message
+│       ├── schemas/                # Pydantic request/response models
+│       ├── routers/
+│       │   ├── auth.py             # register, login, refresh, me
+│       │   ├── documents.py        # upload, list, status, delete
+│       │   └── chat.py             # query (SSE), sessions, history
+│       ├── services/
+│       │   ├── auth_service.py     # JWT create/verify, bcrypt, user CRUD
+│       │   ├── ingest_service.py   # parse → chunk → embed → store
+│       │   └── rag_service.py      # multi-query → rerank → stream
+│       └── tasks/
+│           └── ingest_task.py      # Celery task wrapping ingest_service
+│
+├── frontend/
 │   ├── app/
-│   │   ├── main.py             # App init, CORS, router registration
-│   │   ├── config.py           # Pydantic settings, loads .env
-│   │   ├── celery_app.py       # Celery + Redis broker config
-│   │   ├── core/
-│   │   │   ├── database.py     # SQLAlchemy engine + session
-│   │   │   ├── vectorstore.py  # ChromaDB client, per-user collections
-│   │   │   └── dependencies.py # get_current_user, get_db FastAPI deps
-│   │   ├── models/
-│   │   │   ├── user.py         # User model
-│   │   │   ├── document.py     # Document + DocumentStatus enum
-│   │   │   └── chat.py         # ChatSession + Message
-│   │   ├── schemas/            # Pydantic request/response models
-│   │   ├── routers/
-│   │   │   ├── auth.py         # register, login, refresh
-│   │   │   ├── documents.py    # upload, list, delete, status
-│   │   │   └── chat.py         # query (SSE), history, sessions
-│   │   ├── services/
-│   │   │   ├── auth_service.py # JWT create/verify, bcrypt hash
-│   │   │   ├── ingest_service.py # parse → chunk → embed → store
-│   │   │   └── rag_service.py  # retrieve → rerank → generate
-│   │   └── tasks/
-│   │       └── ingest_task.py  # Celery task wrapping ingest_service
-│   ├── migrations/             # Alembic migration files
-│   ├── tests/
-│   ├── pyproject.toml          # uv dependencies
-│   ├── Dockerfile
-│   └── .env
-├── frontend/                   # Next.js 15 application
-│   ├── app/
-│   │   ├── (auth)/             # login, register pages
-│   │   └── (dashboard)/        # protected routes
-│   │       ├── dashboard/      # document list + upload
-│   │       └── chat/[docId]/   # chat interface per document
+│   │   ├── (marketing)/            # Landing page, public routes
+│   │   │   └── page.tsx            # Hero, features, how it works, pricing, CTA
+│   │   ├── (auth)/                 # Animated split-screen auth
+│   │   │   ├── login/page.tsx
+│   │   │   └── register/page.tsx
+│   │   └── (app)/                  # Protected app shell
+│   │       ├── layout.tsx          # Sidebar + topbar + auth guard
+│   │       ├── dashboard/page.tsx  # Upload zone + document grid + stats
+│   │       ├── chat/[docId]/       # Three-column chat workspace
+│   │       ├── library/page.tsx    # All documents with search + filters
+│   │       └── settings/page.tsx   # Account tabs
 │   ├── components/
-│   │   ├── UploadZone.tsx      # drag-drop file upload
-│   │   ├── ChatWindow.tsx      # message list + SSE stream
-│   │   ├── CitationPanel.tsx   # source chunks sidebar
-│   │   └── DocumentCard.tsx    # doc status badge + actions
+│   │   ├── marketing/              # Hero, FeatureGrid, HowItWorks, Pricing, CTA
+│   │   ├── auth/                   # AuthShell (split-screen), AuthInput
+│   │   ├── app/
+│   │   │   ├── Sidebar.tsx         # Collapsible nav with active route indicator
+│   │   │   ├── Topbar.tsx          # Search bar, notifications, user avatar
+│   │   │   ├── UploadZone.tsx      # Drag-drop with progress bar
+│   │   │   ├── DocumentCard.tsx    # Animated status badge, polling
+│   │   │   ├── ChatWindow.tsx      # Message list + SSE streaming display
+│   │   │   ├── StreamingMessage.tsx# Token-by-token typing + cursor
+│   │   │   ├── CitationPanel.tsx   # Right-side source chunks (xl screens)
+│   │   │   ├── CitationCard.tsx    # Individual chunk with score bar
+│   │   │   ├── SourcesDrawer.tsx   # Slide-in drawer for smaller screens
+│   │   │   ├── ChatInput.tsx       # Auto-resize textarea, send button
+│   │   │   └── SessionList.tsx     # Previous conversations sidebar
+│   │   └── shared/                 # GlassCard, GlowButton, GradientBlob, Logo
 │   └── lib/
-│       ├── api.ts              # typed fetch wrapper
-│       ├── auth.ts             # NextAuth config
-│       └── streaming.ts        # SSE client hook
-├── eval/                       # RAGAS evaluation
-│   ├── golden_dataset.json     # 15 Q+A pairs for benchmarking
-│   └── run_eval.py             # faithfulness, context recall, relevancy
-├── docker-compose.yml
-└── docker-compose.prod.yml
+│       ├── api.ts                  # Axios client + all typed API calls
+│       ├── useStream.ts            # SSE streaming hook with retry logic
+│       ├── useAuth.ts              # Auth guard hook
+│       └── utils.ts                # cn(), formatDate(), formatFileSize()
+│
+├── eval/
+│   ├── golden_dataset.json         # 15 Q&A pairs from Attention Is All You Need
+│   ├── run_eval.py                 # RAGAS evaluation pipeline
+│   └── results/
+│       └── latest.json             # Most recent evaluation output
+│
+├── docker-compose.yml              # Local dev: FastAPI + Celery + PG + Redis + ChromaDB
+└── render.yaml                     # Render infrastructure as code
 ```
 
 ---
 
-## API Endpoints
+## API Reference
 
-| Method   | Endpoint                 | Description                 |
-| -------- | ------------------------ | --------------------------- |
-| `GET`    | `/health`                | Service health check        |
-| `POST`   | `/auth/register`         | Create new user account     |
-| `POST`   | `/auth/login`            | Login, receive JWT          |
-| `POST`   | `/documents/upload`      | Upload PDF/DOCX             |
-| `GET`    | `/documents`             | List user's documents       |
-| `DELETE` | `/documents/{id}`        | Delete document             |
-| `GET`    | `/documents/{id}/status` | Check processing status     |
-| `POST`   | `/chat/{docId}/query`    | Ask a question (SSE stream) |
-| `GET`    | `/chat/{docId}/history`  | Get chat history            |
-
----
-
-## Document Processing Pipeline
-
-```
-User uploads PDF/DOCX
-        ↓
-FastAPI saves file, creates DB record (status: pending)
-        ↓
-Celery task dispatched via Redis
-        ↓
-Worker: parse text (pypdf / python-docx)
-        ↓
-Worker: chunk into ~500 token segments with overlap
-        ↓
-Worker: embed chunks (Gemini embeddings)
-        ↓
-Worker: store in ChromaDB (per-user collection)
-        ↓
-DB record updated (status: ready, chunk_count: N)
-        ↓
-User can now chat with document
-```
-
----
-
-## Useful Commands
+### Auth
 
 ```bash
-# View logs for a specific service
-docker compose logs -f backend
-docker compose logs -f celery_worker
+POST /auth/register   {"email": "...", "password": "..."}
+POST /auth/login      {"email": "...", "password": "..."}  → access_token + refresh_token
+POST /auth/refresh    {"refresh_token": "..."}
+GET  /auth/me         → current user info
 
-# Access containers
-docker compose exec backend bash
-docker compose exec postgres psql -U docmind -d docmind
+# All protected endpoints require:
+Authorization: Bearer <access_token>
+```
 
-# Create a new Alembic migration after model changes
-docker compose exec backend uv run alembic revision --autogenerate -m "add column X"
-docker compose exec backend uv run alembic upgrade head
+### Documents
 
-# Add a new Python package
-cd backend && uv add package-name
+```bash
+POST   /documents/upload              # multipart/form-data, file field
+GET    /documents/                    # list all user documents
+GET    /documents/{id}/status         # pending | processing | ready | failed
+DELETE /documents/{id}                # removes DB record + vectors + file
+```
 
-# Run tests
-docker compose exec backend uv run pytest
+### Chat
 
-# Stop everything
-docker compose down
+```bash
+POST /chat/query
+{
+  "document_id": "uuid",
+  "question": "What is multi-head attention?",
+  "session_id": null    # null = new session, uuid = continue existing
+}
 
-# Stop and wipe all data (fresh start)
-docker compose down -v
+# SSE events received in order:
+# data: {"type": "session_id", "session_id": "uuid"}
+# data: {"type": "token",      "content": "Multi"}
+# data: {"type": "token",      "content": "-head"}
+# data: {"type": "sources",    "sources": [...]}
+# data: {"type": "done"}
+
+GET /chat/sessions?document_id=uuid   # list sessions for a document
+GET /chat/sessions/{session_id}       # session + full message history
 ```
 
 ---
 
-## Environment Variables
+## Running Locally
 
-| Variable         | Description                  | Example                                              |
-| ---------------- | ---------------------------- | ---------------------------------------------------- |
-| `DATABASE_URL`   | PostgreSQL connection string | `postgresql://docmind:docmind@postgres:5432/docmind` |
-| `REDIS_URL`      | Redis connection string      | `redis://redis:6379/0`                               |
-| `CHROMA_HOST`    | ChromaDB host                | `chromadb`                                           |
-| `CHROMA_PORT`    | ChromaDB port                | `8001`                                               |
-| `SECRET_KEY`     | JWT signing key              | `openssl rand -hex 32`                               |
-| `GEMINI_API_KEY` | Google Gemini API key        | `AIza...`                                            |
+**Prerequisites:** Docker + Docker Compose + API key for your chosen LLM provider
+
+```bash
+# 1. Clone
+git clone https://github.com/F4dn/DocMind.git
+cd DocMind
+
+# 2. Create .env in project root
+cat > .env << EOF
+GEMINI_API_KEY=your-gemini-key
+# or
+HUGGINGFACE_API_KEY=your-hf-key
+
+EMBEDDING_PROVIDER=gemini   # gemini | openai | huggingface
+LLM_PROVIDER=gemini         # gemini | openai | huggingface
+EOF
+
+# 3. Start all services
+docker compose up --build
+
+# 4. Run migrations (first time only)
+docker compose exec backend alembic upgrade head
+```
+
+| Service       | URL                        |
+| ------------- | -------------------------- |
+| Frontend      | http://localhost:3000      |
+| API + Swagger | http://localhost:8000/docs |
+| ChromaDB      | http://localhost:8001      |
+
+### Adding Python packages
+
+```bash
+cd backend
+uv add package-name          # production dependency
+uv add --dev package-name    # dev only (eval, linting)
+
+# Rebuild containers after adding
+docker compose up --build backend celery_worker
+```
 
 ---
 
 ## Evaluation (RAGAS)
 
-DocMind includes a RAGAS evaluation suite to benchmark RAG quality:
+Evaluated on 15 questions from the _Attention Is All You Need_ paper (Vaswani et al., 2017).
+RAGAS judge: Gemini 1.5 Flash. App answer generation: HuggingFace.
+
+| Metric               | What it measures                                            | Score |
+| -------------------- | ----------------------------------------------------------- | ----- |
+| **Faithfulness**     | Answers stay grounded in retrieved chunks, no hallucination | —     |
+| **Answer Relevancy** | Answers actually address the question asked                 | —     |
+| **Context Recall**   | Retrieved chunks contain the information needed             | —     |
+| **Overall**          | Average across all three metrics                            | —     |
+
+_Run the evaluation yourself to populate these scores:_
 
 ```bash
-cd eval
-python run_eval.py
+# Add eval volume to docker-compose.yml backend service first:
+# - ./eval:/app/eval
+
+docker compose exec backend python eval/run_eval.py \
+  --email    your@email.com \
+  --password yourpassword \
+  --doc-id   YOUR_DOC_UUID \
+  --delay    12
 ```
 
-Metrics tracked:
-
-- **Faithfulness** — are answers grounded in the document?
-- **Context Recall** — are relevant chunks being retrieved?
-- **Answer Relevancy** — does the answer address the question?
-
-Results are saved to `eval/results/` and should be included in the README after running.
+Results are saved to `eval/results/latest.json`.
 
 ---
 
-## Roadmap
+## Key Engineering Decisions
 
-- [ ] Alembic migrations + Auth endpoints
-- [ ] Document upload + Celery ingestion pipeline
-- [ ] RAG service with Gemini
-- [ ] SSE streaming chat
-- [ ] Next.js frontend
-- [ ] RAGAS evaluation
-- [ ] Production Docker Compose
-- [ ] CI/CD with GitHub Actions
+**Document-level ChromaDB filtering at query time, not after retrieval.**
+If you retrieve top-20 globally then filter by document, all 20 results might belong to other documents — leaving zero relevant chunks. Pushing `document_id` into the ChromaDB `where` clause ensures retrieval is always scoped to the correct document regardless of collection size.
+
+**Two-stage retrieval: bi-encoder + cross-encoder.**
+Embedding-based search is fast but approximate — it compares query and chunk independently. The CrossEncoder reads query and chunk together with full attention, giving much more precise relevance scores. Using both stages gives the speed of vector search with the quality of cross-attention reranking.
+
+**Lazy provider imports.**
+LLM and embedding providers (Gemini, OpenAI, HuggingFace) are only imported inside `if` blocks when actually used. An unconfigured provider's heavyweight dependencies (like `sentence_transformers`) never get imported, preventing startup crashes in production when only one provider is configured.
+
+**Non-blocking ingestion via Celery.**
+Document processing (parse → chunk → embed → store) takes 5–30 seconds. Running this synchronously blocks the API worker for every other user during that time. Celery offloads it to a background worker — the upload endpoint returns in milliseconds and the frontend polls for status updates.
+
+**SSE over WebSockets for streaming.**
+Server-Sent Events are unidirectional (server → client), which is all LLM streaming needs. They require no upgrade handshake, work through standard HTTP proxies, and browsers reconnect automatically on failure. WebSockets would add bidirectional complexity for no benefit here.
+
+**Multi-tenant vector isolation.**
+Each user gets their own ChromaDB collection (`user_{uuid}`). Even if two users upload the same document, their vectors live in completely separate namespaces. Queries are always scoped to the requesting user's collection — no cross-tenant data leakage is possible.
+
+---
+
+## Local vs Production
+
+|            | Local                                       | Production                               |
+| ---------- | ------------------------------------------- | ---------------------------------------- |
+| Dockerfile | `Dockerfile.dev` — single stage, hot reload | `Dockerfile` — multi-stage, slim runtime |
+| Celery     | Separate container                          | Same container via `start.sh`            |
+| ChromaDB   | Local Docker container                      | Chroma Cloud (free, persistent)          |
+| Redis      | Local Docker container                      | Upstash (serverless, free tier)          |
+| Migrations | Manual `alembic upgrade head`               | Auto-runs in `start.sh` on deploy        |
+| uvicorn    | `--reload` flag                             | No reload, production config             |
 
 ---
 
 ## License
 
-MIT
+MIT — free to use, modify, and deploy.
+
+---
+
+_Built by [Fardeen Qamar](https://github.com/F4dn) · MSc Computational Modeling and Simulation · TU Dresden_

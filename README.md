@@ -2,7 +2,7 @@
 
 > Upload any document. Ask anything. Get cited answers, streamed in real time.
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-docmind.vercel.app-A855F7?style=flat-square)](https://docmind.vercel.app)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-docmind.vercel.app-A855F7?style=flat-square)](https://doc-mind-kappa.vercel.app/)
 [![License](https://img.shields.io/badge/License-MIT-10B981?style=flat-square)](LICENSE)
 
 ---
